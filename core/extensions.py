@@ -79,7 +79,7 @@ class S3UploadExtension:
             )
 
             # Choose a name inside S3
-            s3_key = f"{self.s3_prefix}{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+            s3_key = f"{self.s3_prefix}_{spider.name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
 
             # Upload
             s3.upload_file(self.file_path, self.bucket, s3_key)

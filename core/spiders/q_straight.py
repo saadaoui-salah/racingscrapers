@@ -122,12 +122,14 @@ class RacingqueenslandSpider(scrapy.Spider):
                 )
 
     def parse_details(self, repsonse):
-        race_link = repsonse.xpath('//a[@class="c-race-downloads__link" and contains(./span, "Meeting Sectionals PDF")]/@href').get()
+        race_link = repsonse.xpath('//*[contains(@class, "c-race-downloads__") and contains(./span, "Meeting Sectionals PDF")]/@href').get()
         if race_link:
             yield scrapy.Request(
                 url=f"https://racingqueensland.com.au{race_link}",
                 callback=self.parse_results,
             )
+        else:
+            print(repsonse.url)
 
     def format_time(self, text):
         raw = text[2].split(' - ')[-1].strip()
@@ -215,6 +217,7 @@ class RacingqueenslandSpider(scrapy.Spider):
                                 item["sec_300_rank"] = row[10].split('\n')[0].split('[')[1].split(']')[0]
                                 item["Run_home"] = row[11].split('\n')[0].split('[')[0]
                                 item["Hme_speed"] = row[11].split('\n')[1].replace('KM/H','')
+                            print(item)
                             yield item
                         except: 
                             breakpoint()

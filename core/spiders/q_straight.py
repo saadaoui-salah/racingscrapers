@@ -211,10 +211,10 @@ class RacingqueenslandSpider(scrapy.Spider):
                                 item["distance"] = "350M"
                                 item["350m_time"] = row[10].split('\n')[0].split('[')[0]
                                 item["350m_speed"] = row[10].split('\n')[1].replace('KM/H','')
-                                item["section_350_meters_to_rail_for_section"] = self.get_to_rail(row[10]),
+                                item["section_350_meters_to_rail_for_section"] = self.get_to_rail(row[10])
+                                item["sec_300_rank"] = row[10].split('\n')[0].split('[')[1].split(']')[0]
                                 item["Run_home"] = row[11].split('\n')[0].split('[')[0]
                                 item["Hme_speed"] = row[11].split('\n')[1].replace('KM/H','')
-                                item["sec_300_rank"] = row[11].split('\n')[0].split('[')[1].split(']')[0],
                             yield item
                         except: 
                             breakpoint()

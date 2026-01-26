@@ -145,7 +145,7 @@ class RacingqueenslandSpider(scrapy.Spider):
 
     def get_to_rail(self, row):
         try:
-            return row.split('\n')[2].split('(')[1][:-1]
+            return row.split('\n')[2].split('(')[1][:-1].upper().replace('M','')
         except:
             return '--'
 

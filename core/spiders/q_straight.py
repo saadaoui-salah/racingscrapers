@@ -85,6 +85,10 @@ class RacingqueenslandSpider(scrapy.Spider):
     name = "q_straight"
     start_urls = ["https://racingqueensland.com.au/racing/full-calendar/"]
     url_filter = 'qst'
+    custom_settings = {
+        'UPLOAD_FILE_PATH':f"{name}.csv"
+    }
+    event_code = 'greyhound'
 
     def get_slugs(self):
 
@@ -109,7 +113,7 @@ class RacingqueenslandSpider(scrapy.Spider):
 
 
     def parse(self, response):
-        urls = response.css('[data-js-calendar-events-code="greyhound"] .s-race-calendar__grid__event > a::attr(href)').getall()
+        urls = response.css(f'[data-js-calendar-events-code="{self.event_code}"] .s-race-calendar__grid__event > a::attr(href)').getall()
         for url in urls:
             if self.url_filter in url:
                 yield scrapy.Request(

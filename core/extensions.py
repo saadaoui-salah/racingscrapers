@@ -1,3 +1,5 @@
+import os
+
 import dropbox
 from scrapy import signals
 from datetime import datetime
@@ -43,45 +45,64 @@ class DropboxUploadExtension:
 
 class S3UploadExtension:
 
-    def __init__(self, access_key, secret_key, file_path, bucket, s3_prefix):
+    def __init__(self, access_key, secret_key, bucket, s3_prefix, file_path):
         self.access_key = access_key
         self.secret_key = secret_key
-        self.file_path = file_path
         self.bucket = bucket
         self.s3_prefix = s3_prefix.rstrip("/") + "/"
+        self.file_path = file_path  # detected output file
 
     @classmethod
     def from_crawler(cls, crawler):
         access_key = crawler.settings.get("AWS_ACCESS_KEY_ID")
         secret_key = crawler.settings.get("AWS_SECRET_ACCESS_KEY")
-        file_path = crawler.settings.get("UPLOAD_FILE_PATH")  # local CSV path
-
         bucket = crawler.settings.get("S3_BUCKET")
+
         s3_prefix = crawler.settings.get(
             "S3_PREFIX",
             f"unity-catalog/652267796750120/CSV/{datetime.now().strftime('%Y%m%d%H%M%S')}"
         )
 
-        ext = cls(access_key, secret_key, file_path, bucket, s3_prefix)
-        crawler.signals.connect(ext.spider_closed, signal=signals.spider_closed)
+        # -------- Detect output file automatically -------- #
+        file_path = None
 
+        # New Scrapy (FEEDS setting)
+        feeds = crawler.settings.get("FEEDS")
+        if feeds:
+            file_path = list(feeds.keys())[0]  # first output target
+
+        # Old Scrapy fallback
+        if not file_path:
+            file_path = crawler.settings.get("FEED_URI")
+
+        if not file_path:
+            raise Exception("❌ Could not detect output file (FEEDS / -o not set)")
+
+        ext = cls(access_key, secret_key, bucket, s3_prefix, file_path)
+        crawler.signals.connect(ext.spider_closed, signal=signals.spider_closed)
         return ext
 
     def spider_closed(self, spider):
-        spider.logger.info("🚀 Spider closed — uploading CSV to S3...")
+        spider.logger.info("🚀 Spider closed — uploading output file to S3...")
 
         try:
-            # Create S3 client
+            if not os.path.exists(self.file_path):
+                spider.logger.error(f"❌ Output file not found: {self.file_path}")
+                return
+
             s3 = boto3.client(
                 "s3",
                 aws_access_key_id=self.access_key,
                 aws_secret_access_key=self.secret_key,
             )
 
-            # Choose a name inside S3
-            s3_key = f"{self.s3_prefix}_{spider.name}_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv"
+            filename = os.path.basename(self.file_path)
 
-            # Upload
+            s3_key = (
+                f"{self.s3_prefix}{spider.name}_"
+                f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+            )
+
             s3.upload_file(self.file_path, self.bucket, s3_key)
 
             spider.logger.info(f"✅ Uploaded to S3: s3://{self.bucket}/{s3_key}")

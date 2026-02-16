@@ -85,9 +85,6 @@ class RacingqueenslandSpider(scrapy.Spider):
     name = "q_straight"
     start_urls = ["https://racingqueensland.com.au/racing/full-calendar/"]
     url_filter = 'qst'
-    custom_settings = {
-        'UPLOAD_FILE_PATH':f"{name}.csv"
-    }
     event_code = 'greyhound'
 
     def get_slugs(self):

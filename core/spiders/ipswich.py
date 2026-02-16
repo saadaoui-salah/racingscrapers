@@ -5,7 +5,3 @@ class IpswichSpider(RacingqueenslandSpider):
     url_filter = 'ipsw'
     name = "ipswich"
     event_code = 'thoroughbred'
-    custom_settings = {
-        'UPLOAD_FILE_PATH':f"{name}.csv"
-    }
-    

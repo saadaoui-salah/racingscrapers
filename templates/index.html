@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>🕷️ Spider Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Soft glass cards */
+      .glass-card {
+        background: rgba(30, 30, 35, 0.85);
+        border-radius: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 1.5rem;
+        transition: transform 0.2s ease;
+      }
+      .glass-card:hover {
+        transform: translateY(-4px);
+      }
+      /* Soft focus for inputs */
+      input,
+      select {
+        transition: all 0.2s ease;
+      }
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: #38bdf8; /* sky-400 */
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-gray-100 p-8 font-sans">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-4xl font-bold text-sky-400">🕷️ Spider Dashboard</h1>
+    </div>
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %} {% for
+    category, message in messages %}
+    <div
+      class="my-4 p-4 rounded-lg border-l-4 {{ 'border-green-500 bg-gray-800 text-green-300' if category=='success' else 'border-red-500 bg-gray-800 text-red-300' }}"
+    >
+      {{ message }}
+    </div>
+    {% endfor %} {% endwith %}
+    <!-- Spider Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {% for spider in spiders %}
+      <div class="glass-card flex flex-col justify-between">
+        <div>
+          <h2 class="text-2xl font-semibold text-sky-300 mb-2">{{ spider }}</h2>
+          <p>
+            Status: {% if status[spider] %}
+            <span
+              class="px-2 py-1 rounded-full bg-green-500 text-black font-semibold"
+              >Running</span
+            >
+            {% else %}
+            <span
+              class="px-2 py-1 rounded-full bg-red-500 text-black font-semibold"
+              >Stopped</span
+            >
+            {% endif %}
+          </p>
+          {% if jobs_info[spider] %}
+          <p class="mt-1 text-gray-300">
+            Schedule: {{ jobs_info[spider].schedule_type }} | Next: {{
+            jobs_info[spider].next_run or '--:-- --' }}
+          </p>
+          {% else %}
+          <p class="text-gray-500 mt-1">No schedule</p>
+          {% endif %}
+        </div>
+
+        <div class="mt-4 flex flex-col gap-3">
+          <!-- Run / Stop Buttons -->
+          <div class="flex gap-2">
+            <form
+              method="POST"
+              action="{{ url_for('run_spider', spider_name=spider) }}"
+              class="flex-1"
+            >
+              <button
+                class="w-full bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                {%
+                if
+                status[spider]
+                %}disabled{%
+                endif
+                %}
+              >
+                ▶ Run
+              </button>
+            </form>
+            <form
+              method="POST"
+              action="{{ url_for('stop_spider', spider_name=spider) }}"
+              class="flex-1"
+            >
+              <button
+                class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                {%
+                if
+                not
+                status[spider]
+                %}disabled{%
+                endif
+                %}
+              >
+                ⏹ Stop
+              </button>
+            </form>
+          </div>
+
+          <!-- Schedule Form -->
+          <form
+            method="POST"
+            action="{{ url_for('schedule_spider', spider_name=spider) }}"
+            class="flex flex-col gap-3 mt-2"
+          >
+            <div class="flex flex-col">
+              <label
+                for="schedule_{{ spider }}"
+                class="font-semibold text-gray-300"
+                >Schedule</label
+              >
+              <select
+                id="schedule_{{ spider }}"
+                name="schedule"
+                class="px-3 py-2 rounded-lg border border-gray-600 bg-gray-800 text-gray-100"
+              >
+                <option value="10min">Every 10 min</option>
+                <option value="15min">Every 15 min</option>
+                <option value="30min">Every 30 min</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2">
+              <div class="flex-1 flex flex-col">
+                <label
+                  for="start_{{ spider }}"
+                  class="font-semibold text-gray-300"
+                  >Start Time</label
+                >
+                <input
+                  type="time"
+                  id="start_{{ spider }}"
+                  name="start_time"
+                  class="px-3 py-2 rounded-lg border border-gray-600 bg-gray-800 text-gray-100"
+                />
+              </div>
+              <div class="flex-1 flex flex-col">
+                <label
+                  for="end_{{ spider }}"
+                  class="font-semibold text-gray-300"
+                  >End Time</label
+                >
+                <input
+                  type="time"
+                  id="end_{{ spider }}"
+                  name="end_time"
+                  class="px-3 py-2 rounded-lg border border-gray-600 bg-gray-800 text-gray-100"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              class="mt-2 bg-green-500 text-white hover:bg-green-600 text-black px-4 py-2 rounded-lg font-semibold transition-colors"
+            >
+              Set Schedule
+            </button>
+          </form>
+
+          <!-- Remove Schedule Form -->
+          <form
+            method="POST"
+            action="{{ url_for('unschedule_spider', spider_name=spider) }}"
+            class="mt-2"
+          >
+            <button
+              type="submit"
+              class="w-full text-white bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-lg font-semibold"
+            >
+              Remove Schedule
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </body>
+</html>

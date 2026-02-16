@@ -56,7 +56,7 @@ requests==2.32.5
 requests-file==3.0.1
 runstats==2.0.0
 s3transfer==0.14.0
-Scrapy==2.13.3
+Scrapy==2.14.1
 scrapy-zyte-api==0.32.0
 service-identity==24.2.0
 setuptools==80.9.0

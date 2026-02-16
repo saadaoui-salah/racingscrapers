@@ -168,4 +168,4 @@ def unschedule_spider(spider_name):
 
 # ---------------- Run ---------------- #
 if __name__ == "__main__":
-    app.run(use_reloader=False)
+    app.run(host="0.0.0.0",port="80",use_reloader=False)

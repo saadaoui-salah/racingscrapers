@@ -186,6 +186,7 @@ class UpcomingSpider(scrapy.Spider):
                 'grade':resp['raceClassConditions'],
                 'prize_money':resp['prizeMoney'],
                 'whether':f"{resp['meeting']['trackCondition']} {resp['meeting']['weatherCondition']}",
+                'scraped_at': str(datetime.now())
             }
             if row:
                 item['dog_track_dist'] = row.css('.race-runners__track-dist::text').get()

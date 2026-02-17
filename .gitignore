@@ -3,3 +3,6 @@
 .vscode
 .env
 *.pem
+*/*/*__py*/*.pyc
+*/*__py*/*.pyc
+makefile

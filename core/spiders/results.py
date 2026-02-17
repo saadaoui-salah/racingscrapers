@@ -85,6 +85,7 @@ class ResultsSpider(scrapy.Spider):
                 'fixed_odds_win':run['fixedOdds']['returnWin'] if run['fixedOdds']['bettingStatus'].lower() in ['placing','winner'] else '',
                 'fixed_odds_place':run['fixedOdds']['returnPlace'] if run['fixedOdds']['bettingStatus'].lower() == 'winner' else '',
                 'grade':resp['raceClassConditions'],
+                'scraped_at': str(datetime.now())
             }
             if row:
                 item['dog_1st_sec'] = row.css('.race-runners__sectional::text').getall()[0]

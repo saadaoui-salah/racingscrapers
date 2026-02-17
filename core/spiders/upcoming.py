@@ -153,8 +153,6 @@ class UpcomingSpider(scrapy.Spider):
         resp = response.meta['resp']
         race_number = f"R{resp['raceNumber']}"
         distance = resp['raceDistance']
-        print(f"//a[@class='race-header' and contains(.//div/text(),'{race_number}') and contains(.//div[@class='race-header__info__grade']/text(),'{distance}m')]/@href")
-        print(response.meta['u'])
         url = dogs_rsp.xpath(f"//a[@class='race-header' and contains(.//div/text(),'{race_number}') and contains(.//div[@class='race-header__info__grade']/text(),'{distance}m')]/@href").get()
         if 'https' not in url:
             url = f"https://www.thedogs.com.au{url}"

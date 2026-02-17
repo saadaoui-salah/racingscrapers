@@ -73,7 +73,7 @@ def index():
         job = scheduler.get_job(f"{spider}_job")
         if job:
             jobs_info[spider] = {
-                "next_run": job.next_run_time.astimezone(TZ).strftime("%Y-%m-%d %H:%M:%S") if job.next_run_time else None,
+                "next_run": job.next_run_time.astimezone(TZ).isoformat() if job.next_run_time else None,
                 "schedule_type": job.name,
             }
         else:

@@ -4,19 +4,23 @@
     <meta charset="UTF-8" />
     <title>🕷️ Spider Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
-      /* Soft glass cards */
+      /* Soft light glass card */
       .glass-card {
-        background: rgba(30, 30, 35, 0.85);
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(8px);
         border-radius: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.06);
         padding: 1.5rem;
-        transition: transform 0.2s ease;
+        transition: all 0.2s ease;
       }
       .glass-card:hover {
-        transform: translateY(-4px);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
       }
-      /* Soft focus for inputs */
+
+      /* Soft input focus */
       input,
       select {
         transition: all 0.2s ease;
@@ -24,56 +28,85 @@
       input:focus,
       select:focus {
         outline: none;
-        border-color: #38bdf8; /* sky-400 */
-        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
+        border-color: #0ea5e9;
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.15);
+      }
+
+      /* Neon glow buttons (soft, eye-friendly) */
+      .neon-blue:hover {
+        box-shadow: 0 0 8px rgba(14, 165, 233, 0.6);
+      }
+      .neon-red:hover {
+        box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+      }
+      .neon-green:hover {
+        box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+      }
+      .neon-yellow:hover {
+        box-shadow: 0 0 8px rgba(234, 179, 8, 0.6);
       }
     </style>
   </head>
-  <body class="bg-gray-900 text-gray-100 p-8 font-sans">
+
+  <body class="bg-gray-100 text-gray-800 p-8 font-sans">
     <!-- Header -->
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-4xl font-bold text-sky-400">🕷️ Spider Dashboard</h1>
+      <h1 class="text-4xl font-bold text-sky-600">🕷️ Spider Dashboard</h1>
     </div>
+
     <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %} {% for
     category, message in messages %}
     <div
-      class="my-4 p-4 rounded-lg border-l-4 {{ 'border-green-500 bg-gray-800 text-green-300' if category=='success' else 'border-red-500 bg-gray-800 text-red-300' }}"
+      class="my-4 p-4 rounded-lg border-l-4 
+        {{ 'border-green-500 bg-green-50 text-green-700' if category=='success' else 'border-red-500 bg-red-50 text-red-700' }}"
     >
       {{ message }}
     </div>
     {% endfor %} {% endwith %}
+
     <!-- Spider Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {% for spider in spiders %}
-      <div class="glass-card flex flex-col justify-between">
+      <div
+        class="glass-card flex flex-col justify-between"
+        data-spider="{{ spider }}"
+      >
+        <!-- Top -->
         <div>
-          <h2 class="text-2xl font-semibold text-sky-300 mb-2">{{ spider }}</h2>
+          <h2 class="text-2xl font-semibold text-sky-700 mb-2">{{ spider }}</h2>
+
           <p>
-            Status: {% if status[spider] %}
+            Status:
             <span
-              class="px-2 py-1 rounded-full bg-green-500 text-black font-semibold"
-              >Running</span
+              class="status-label px-2 py-1 rounded-full {% if status[spider] %} bg-green-100 text-green-700 {% else %} bg-red-100 text-red-700 {% endif %} font-semibold"
             >
-            {% else %}
-            <span
-              class="px-2 py-1 rounded-full bg-red-500 text-black font-semibold"
-              >Stopped</span
-            >
-            {% endif %}
+              {% if status[spider] %}Running{% else %}Stopped{% endif %}
+            </span>
           </p>
-          {% if jobs_info[spider] %}
-          <p class="mt-1 text-gray-300">
-            Schedule: {{ jobs_info[spider].schedule_type }} | Next: {{
-            jobs_info[spider].next_run or '--:-- --' }}
+
+          {% if jobs_info[spider] and jobs_info[spider].next_run %}
+          <p class="mt-1 text-gray-600 text-sm">
+            Next run:
+            <span class="next-run" data-time="{{ jobs_info[spider].next_run }}">
+              {{ jobs_info[spider].next_run[:19].replace('T', ' ') }}
+            </span>
+          </p>
+
+          <p class="text-sm text-grey-600">
+            Starts in:
+            <span class="countdown" data-time="{{ jobs_info[spider].next_run }}"
+              >--:--:--</span
+            >
           </p>
           {% else %}
           <p class="text-gray-500 mt-1">No schedule</p>
           {% endif %}
         </div>
 
+        <!-- Actions -->
         <div class="mt-4 flex flex-col gap-3">
-          <!-- Run / Stop Buttons -->
+          <!-- Run / Stop -->
           <div class="flex gap-2">
             <form
               method="POST"
@@ -81,7 +114,7 @@
               class="flex-1"
             >
               <button
-                class="w-full bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                class="w-full bg-sky-500 hover:bg-sky-600 text-white px-4 py-2 rounded-lg font-semibold neon-blue disabled:opacity-50"
                 {%
                 if
                 status[spider]
@@ -92,13 +125,14 @@
                 ▶ Run
               </button>
             </form>
+
             <form
               method="POST"
               action="{{ url_for('stop_spider', spider_name=spider) }}"
               class="flex-1"
             >
               <button
-                class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                class="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold neon-red disabled:opacity-50"
                 {%
                 if
                 not
@@ -112,22 +146,17 @@
             </form>
           </div>
 
-          <!-- Schedule Form -->
+          <!-- Schedule -->
           <form
             method="POST"
             action="{{ url_for('schedule_spider', spider_name=spider) }}"
-            class="flex flex-col gap-3 mt-2"
+            class="flex flex-col gap-3"
           >
-            <div class="flex flex-col">
-              <label
-                for="schedule_{{ spider }}"
-                class="font-semibold text-gray-300"
-                >Schedule</label
-              >
+            <div>
+              <label class="font-semibold text-gray-600">Schedule</label>
               <select
-                id="schedule_{{ spider }}"
                 name="schedule"
-                class="px-3 py-2 rounded-lg border border-gray-600 bg-gray-800 text-gray-100"
+                class="w-full px-3 py-2 rounded-lg border bg-white"
               >
                 <option value="10min">Every 10 min</option>
                 <option value="15min">Every 15 min</option>
@@ -138,52 +167,40 @@
               </select>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-2">
-              <div class="flex-1 flex flex-col">
-                <label
-                  for="start_{{ spider }}"
-                  class="font-semibold text-gray-300"
-                  >Start Time</label
-                >
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <label class="font-semibold text-gray-600">Start Time</label>
                 <input
                   type="time"
-                  id="start_{{ spider }}"
                   name="start_time"
-                  class="px-3 py-2 rounded-lg border border-gray-600 bg-gray-800 text-gray-100"
+                  class="w-full px-3 py-2 rounded-lg border bg-white"
                 />
               </div>
-              <div class="flex-1 flex flex-col">
-                <label
-                  for="end_{{ spider }}"
-                  class="font-semibold text-gray-300"
-                  >End Time</label
-                >
+
+              <div class="flex-1">
+                <label class="font-semibold text-gray-600">End Time</label>
                 <input
                   type="time"
-                  id="end_{{ spider }}"
                   name="end_time"
-                  class="px-3 py-2 rounded-lg border border-gray-600 bg-gray-800 text-gray-100"
+                  class="w-full px-3 py-2 rounded-lg border bg-white"
                 />
               </div>
             </div>
 
             <button
-              type="submit"
-              class="mt-2 bg-green-500 text-white hover:bg-green-600 text-black px-4 py-2 rounded-lg font-semibold transition-colors"
+              class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-semibold neon-green"
             >
               Set Schedule
             </button>
           </form>
 
-          <!-- Remove Schedule Form -->
+          <!-- Remove -->
           <form
             method="POST"
             action="{{ url_for('unschedule_spider', spider_name=spider) }}"
-            class="mt-2"
           >
             <button
-              type="submit"
-              class="w-full text-white bg-yellow-500 hover:bg-yellow-600 text-black px-4 py-2 rounded-lg font-semibold"
+              class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-semibold neon-yellow"
             >
               Remove Schedule
             </button>
@@ -192,5 +209,75 @@
       </div>
       {% endfor %}
     </div>
+    <script>
+      /* ---------- Auto Refresh ---------- */
+      async function refreshStatus() {
+        try {
+          const res = await fetch(window.location.href, {
+            headers: { "X-Requested-With": "XMLHttpRequest" },
+          });
+          const text = await res.text();
+
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(text, "text/html");
+
+          document.querySelectorAll("[data-spider]").forEach((card) => {
+            const spider = card.dataset.spider;
+            const newCard = doc.querySelector(`[data-spider="${spider}"]`);
+            if (!newCard) return;
+
+            const oldStatus = card.querySelector(".status-label");
+            const newStatus = newCard.querySelector(".status-label");
+            if (oldStatus && newStatus)
+              oldStatus.innerHTML = newStatus.innerHTML;
+
+            const oldNext = card.querySelector(".next-run");
+            const newNext = newCard.querySelector(".next-run");
+            if (oldNext && newNext) {
+              oldNext.dataset.time = newNext.dataset.time;
+              oldNext.innerText = newNext.innerText;
+            }
+          });
+        } catch (e) {
+          console.log("Refresh failed", e);
+        }
+      }
+      setInterval(refreshStatus, 10000);
+
+      /* ---------- Countdown using Australia/Perth ---------- */
+      function updateCountdowns() {
+        const now = new Date();
+
+        document.querySelectorAll(".countdown").forEach((el) => {
+          const targetStr = el.dataset.time;
+          if (!targetStr) {
+            el.innerText = "--:--:--";
+            return;
+          }
+
+          const target = new Date(targetStr); // ISO with +08:00 → correct TZ
+          const diff = target - now;
+
+          if (diff <= 0) {
+            el.innerText = "Starting...";
+            return;
+          }
+
+          const h = Math.floor(diff / 3600000);
+          const m = Math.floor((diff % 3600000) / 60000);
+          const s = Math.floor((diff % 60000) / 1000);
+
+          el.innerText =
+            String(h).padStart(2, "0") +
+            ":" +
+            String(m).padStart(2, "0") +
+            ":" +
+            String(s).padStart(2, "0");
+        });
+      }
+
+      setInterval(updateCountdowns, 1000);
+      updateCountdowns();
+    </script>
   </body>
 </html>

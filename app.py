@@ -56,8 +56,9 @@ def run_spider_job(spider_name, start_t=None, end_t=None):
     if start_t and end_t and not (start_t <= now <= end_t):
         return  # outside allowed window
     if not is_running(spider_name):
+        time = datetime.now(TZ).strftime("%Y-%m-%d_%H:%M:%S")
         proc = subprocess.Popen(
-            ["scrapy", "crawl", spider_name, "--logfile", "auto/%(name)s_%(time)s.log", "-o", "exports/%(name)s_%(time)s.csv"],
+            ["scrapy", "crawl", spider_name, "--logfile", f"auto/{spider_name}_{time}.log", "-o", f"exports/{spider_name}_{time}.csv"],
             cwd=SCRAPY_PROJECT_PATH,
         )
         running_spiders[spider_name] = proc

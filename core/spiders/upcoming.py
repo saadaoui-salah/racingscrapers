@@ -171,7 +171,7 @@ class UpcomingSpider(scrapy.Spider):
         for run in resp['runners']:
             dog_name = run['runnerName']
             time = time_until_race(resp['raceStartTime'])
-            row = dogs_resp.xpath(f"//tr[contains(translate(normalize-space(./td/div/text()), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{dog_name}')]")
+            row = dogs_resp.xpath(f'//tr[contains(translate(normalize-space(./td/div/text()), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "{dog_name}")]')
             item = {
                 'track_name':resp['meeting']['meetingName'],
                 'date_of_race':resp['meeting']['meetingDate'],

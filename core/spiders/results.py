@@ -67,10 +67,10 @@ class ResultsSpider(scrapy.Spider):
         dogs_resp = load(response)
         race_number = f"R{resp['raceNumber']}"
         distance = resp['raceDistance']
-        for i in resp['results']:
-            run = list(filter(lambda x: x['runnerNumber'] == i[0], resp['runners']))[0]
-            dog_name = run['name']
-            row = dogs_resp.xpath(f"//tr[contains(translate(normalize-space(./td/div/text()), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{dog_name}')]")
+        for i, res in enumerate(resp['results']):
+            run = list(filter(lambda x: x['runnerNumber'] == res[0], resp['runners']))[0]
+            dog_name = run['runnerName']
+            row = dogs_resp.xpath(f'//tr[contains(translate(normalize-space(./td/div/text()), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "{dog_name}")]')
             item = {
                 'track_name':resp['meeting']['meetingName'],
                 'date_of_race':resp['meeting']['meetingDate'],
@@ -80,7 +80,7 @@ class ResultsSpider(scrapy.Spider):
                 'whether':f"{resp['meeting']['trackCondition']} {resp['meeting']['weatherCondition']}",
                 'race_number':race_number,
                 'race_distance':distance,
-                'dog_name':f"{run['sortOrder']}. {dog_name}",
+                'dog_name':dog_name,
                 'finishing_positon':i+1,
                 'fixed_odds_win':run['fixedOdds']['returnWin'] if run['fixedOdds']['bettingStatus'].lower() in ['placing','winner'] else '',
                 'fixed_odds_place':run['fixedOdds']['returnPlace'] if run['fixedOdds']['bettingStatus'].lower() == 'winner' else '',

@@ -115,8 +115,8 @@ class UpcomingSpider(scrapy.Spider):
         'QPD':'ladbrokes-q2-parkland',
         'CPL':'capalaba',
         'QST':'ladbrokes-q-straight',
-        'QPD':'ladbrokes-q1-lakeside',
-        'QPD':'ipswich',
+        'QPD2':'ladbrokes-q1-lakeside',
+        'IPS':'ipswich',
     }
 
     def start_requests(self):
@@ -154,6 +154,32 @@ class UpcomingSpider(scrapy.Spider):
         race_number = f"R{resp['raceNumber']}"
         distance = resp['raceDistance']
         url = dogs_rsp.xpath(f"//a[@class='race-header' and contains(.//div/text(),'{race_number}') and contains(.//div[@class='race-header__info__grade']/text(),'{distance}m')]/@href").get()
+        if not url:
+            for run in resp['runners']:
+                dog_name = run['runnerName']
+                time = time_until_race(resp['raceStartTime'])
+                item = {
+                    'track_name':resp['meeting']['meetingName'],
+                    'date_of_race':resp['meeting']['meetingDate'],
+                    'box_number':run['runnerNumber'],
+                    'dog_name':dog_name,
+                    'fixed_odds_win':run['fixedOdds']['returnWin'],
+                    'fixed_odds_place':run['fixedOdds']['returnPlace'],
+                    'time_till_race':time,
+                    'race_number':race_number,
+                    'race_time':resp['raceStartTime'].split('T')[1].split('.')[0],
+                    'race_distance':distance,
+                    'grade':resp['raceClassConditions'],
+                    'prize_money':resp['prizeMoney'],
+                    'whether':f"{resp['meeting']['trackCondition']} {resp['meeting']['weatherCondition']}",
+                    'scraped_at': str(datetime.now())
+                }
+                item['dog_track_dist'] = ''
+                item['dog_av_1'] = ''
+                item['dog_trainer'] = ''
+                item['dog_last_start'] = ''
+                yield item
+            return
         if 'https' not in url:
             url = f"https://www.thedogs.com.au{url}"
         yield ZyteRequest(
@@ -171,7 +197,7 @@ class UpcomingSpider(scrapy.Spider):
         for run in resp['runners']:
             dog_name = run['runnerName']
             time = time_until_race(resp['raceStartTime'])
-            row = dogs_resp.xpath(f'//tr[contains(translate(normalize-space(./td/div/text()), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "{dog_name}")]')
+            row = dogs_resp.xpath(f'//tr[contains(translate(normalize-space(./td/div//text()), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "{dog_name.lower()}")]')
             item = {
                 'track_name':resp['meeting']['meetingName'],
                 'date_of_race':resp['meeting']['meetingDate'],
@@ -188,9 +214,14 @@ class UpcomingSpider(scrapy.Spider):
                 'whether':f"{resp['meeting']['trackCondition']} {resp['meeting']['weatherCondition']}",
                 'scraped_at': str(datetime.now())
             }
+            item['dog_track_dist'] = ''
+            item['dog_av_1'] = ''
+            item['dog_trainer'] = ''
+            item['dog_last_start'] = ''
             if row:
                 item['dog_track_dist'] = row.css('.race-runners__track-dist::text').get()
                 item['dog_av_1'] = row.css('.race-runners__speedmap div:nth-child(1)::text').get()
+                item['dog_trainer'] = row.css('.race-runners__trainer a::text').get()
                 item['dog_last_start'] = '|'.join(row.xpath('.//a[@class="runner-result-cell"]//div//text()').getall())
             yield item
 

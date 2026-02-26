@@ -9,11 +9,11 @@ class ResultsSpider(scrapy.Spider):
     name = "results"
     races = ['q2 parkland', 'capalaba', 'q straight', 'q1 lakeside', 'ipswich']
     races_dict = {
-        'QPD':'ladbrokes-q2-parkland',
         'CPL':'capalaba',
         'QST':'ladbrokes-q-straight',
-        'QPD':'ladbrokes-q1-lakeside',
-        'QPD':'ipswich',
+        'QPD2':'ladbrokes-q1-lakeside',
+        'QPD':'ladbrokes-q2-parkland',
+        'IPS':'ipswich',
     }
 
 
@@ -67,10 +67,10 @@ class ResultsSpider(scrapy.Spider):
         dogs_resp = load(response)
         race_number = f"R{resp['raceNumber']}"
         distance = resp['raceDistance']
-        for i, res in enumerate(resp['results']):
-            run = list(filter(lambda x: x['runnerNumber'] == res[0], resp['runners']))[0]
+        for run in resp['runners']:
             dog_name = run['runnerName']
-            row = dogs_resp.xpath(f'//tr[contains(translate(normalize-space(./td/div/text()), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "{dog_name}")]')
+            row = dogs_resp.xpath(f'//tr[contains(translate(normalize-space(./td/div//text()), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "{dog_name.lower()}")]')
+            position = row.css('.race-runners__finish-position::text').get('')
             item = {
                 'track_name':resp['meeting']['meetingName'],
                 'date_of_race':resp['meeting']['meetingDate'],
@@ -81,15 +81,24 @@ class ResultsSpider(scrapy.Spider):
                 'race_number':race_number,
                 'race_distance':distance,
                 'dog_name':dog_name,
-                'finishing_positon':i+1,
-                'fixed_odds_win':run['fixedOdds']['returnWin'] if run['fixedOdds']['bettingStatus'].lower() in ['placing','winner'] else '',
-                'fixed_odds_place':run['fixedOdds']['returnPlace'] if run['fixedOdds']['bettingStatus'].lower() == 'winner' else '',
+                'finishing_positon':position[0] if position else '',
+                'fixed_odds_win':run['fixedOdds']['returnWin'],
+                'fixed_odds_place':run['fixedOdds']['returnPlace'],
                 'grade':resp['raceClassConditions'],
                 'scraped_at': str(datetime.now())
             }
+            item['dog_1st_sec'] = ''
+            item['dog_2nd_sec'] = ''
+            item['dog_overall_time'] = ''
+            item['dog_margin'] = ''
+            item['dog_trainer'] = ''
             if row:
-                item['dog_1st_sec'] = row.css('.race-runners__sectional::text').getall()[0]
-                item['dog_2nd_sec'] = row.css('.race-runners__sectional::text').getall()[1]
-                item['dog_overall_time'] = row.css('.race-runners__time::text').get()
-                item['dog_margin'] = row.css('.race-runners__margin:text').get()
+                try:
+                    item['dog_1st_sec'] = row.css('.race-runners__sectional::text').getall()[0]
+                    item['dog_2nd_sec'] = row.css('.race-runners__sectional::text').getall()[1]
+                    item['dog_overall_time'] = row.css('.race-runners__time::text').get()
+                    item['dog_margin'] = row.css('.race-runners__margin::text').get()
+                    item['dog_trainer'] = row.css('.race-runners__trainer a::text').get()
+                except:
+                    pass
             yield item

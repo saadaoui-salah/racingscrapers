@@ -7,7 +7,7 @@ from core.spiders.upcoming import ZyteRequest, load
 
 class ResultsSpider(scrapy.Spider):
     name = "results"
-    races = ['q2 parkland', 'capalaba', 'q straight', 'q1 lakeside', 'ipswich']
+    races = ['q2 parkland', 'capalaba', 'q straight', 'q1 lakeside']
     races_dict = {
         'CPL':'capalaba',
         'QST':'ladbrokes-q-straight',

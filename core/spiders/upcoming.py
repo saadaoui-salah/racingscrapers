@@ -110,7 +110,7 @@ def time_until_race(race_time_str):
 
 class UpcomingSpider(scrapy.Spider):
     name = "upcoming"
-    races = ['q2 parkland', 'capalaba', 'q straight', 'q1 lakeside', 'ipswich']
+    races = ['q2 parkland', 'capalaba', 'q straight', 'q1 lakeside']
     races_dict = {
         'QPD':'ladbrokes-q2-parkland',
         'CPL':'capalaba',

@@ -9,6 +9,7 @@ import random
 from datetime import datetime, timedelta
 import logging
 logging.getLogger("pdfminer").disabled = True
+from datetime import datetime, timedelta
 
 
 class ZyteRequest(Request):
@@ -87,17 +88,25 @@ class RacingqueenslandSpider(scrapy.Spider):
     url_filter = 'qst'
     event_code = 'greyhound'
 
+    #def get_slugs(self):
+    #    result = []
+    #    current = datetime.now()
+    #    end = datetime(current.year - 1, 10, 1)  # last year October
+    #    while current >= end:
+    #        result.append(current.strftime("%Y/%m"))
+    #        # Go back one month:
+    #        first_day_this_month = current.replace(day=1)
+    #        current = first_day_this_month - timedelta(days=1)
+    #    return result
+
+
     def get_slugs(self):
-
         result = []
-        current = datetime.now()
-        end = datetime(current.year - 1, 10, 1)  # last year October
+        today = datetime.now()
 
-        while current >= end:
-            result.append(current.strftime("%Y/%m"))
-            # Go back one month:
-            first_day_this_month = current.replace(day=1)
-            current = first_day_this_month - timedelta(days=1)
+        for i in range(3):  # today + last 2 days
+            day = today - timedelta(days=i)
+            result.append(day.strftime("%Y/%m/%d"))
 
         return result
 

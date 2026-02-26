@@ -13,7 +13,7 @@ FOLDERS_TO_CLEAN = [
 ]
 
 FILE_EXTENSIONS = (".csv", ".log")
-KEEP_DAYS = 1
+KEEP_DAYS = 2
 LOG_FILE = os.path.join(BASE_DIR, "cleaner.log")
 
 RUN_HOUR = 2      # 02:00 AM
@@ -34,9 +34,6 @@ def clean_old_files():
                 continue
 
             for filename in os.listdir(folder):
-                if not filename.endswith(FILE_EXTENSIONS):
-                    continue
-
                 file_path = os.path.join(folder, filename)
 
                 if os.path.isfile(file_path):

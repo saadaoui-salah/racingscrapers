@@ -1,8 +1,6 @@
 import os
 import time
 from datetime import datetime, timedelta
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
 
 # ================= CONFIG =================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -58,26 +56,12 @@ def clean_old_files():
 
 
 if __name__ == "__main__":
-    scheduler = BackgroundScheduler()
-
-    scheduler.add_job(
-        clean_old_files,
-        CronTrigger(hour=RUN_HOUR, minute=RUN_MINUTE),
-        id="daily_file_cleaner",
-        replace_existing=True,
-        max_instances=1,
-    )
-
-    scheduler.start()
 
     print("Cleaner scheduler started...")
     print(f"Runs daily at {RUN_HOUR:02d}:{RUN_MINUTE:02d}")
     print(f"Keeping files for {KEEP_DAYS} days")
     print("Press Ctrl+C to exit")
 
-    try:
-        while True:
-            time.sleep(60)
-    except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()
-        print("Scheduler stopped.")
+    while True:
+        clean_old_files()
+        time.sleep(60*60*5)

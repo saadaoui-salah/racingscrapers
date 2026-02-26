@@ -1,98 +1,86 @@
 import os
-import re
 import time
-from datetime import datetime
-from collections import defaultdict
-from apscheduler.schedulers.blocking import BlockingScheduler
+from datetime import datetime, timedelta
+from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-# ==============================
-# CONFIG
-# ==============================
-
+# ================= CONFIG =================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 FOLDERS_TO_CLEAN = [
     os.path.join(BASE_DIR, "exports"),
     os.path.join(BASE_DIR, "auto"),
 ]
 
-# Set to False to simulate (no delete)
-DELETE_FILES = True
+FILE_EXTENSIONS = (".csv", ".log")
+KEEP_DAYS = 1
+LOG_FILE = os.path.join(BASE_DIR, "cleaner.log")
 
-# ==============================
-# CLEANER LOGIC
-# ==============================
-
-pattern = re.compile(
-    r"^(?P<prefix>.+)_(?P<date>\d{4}-\d{2}-\d{2})_(?P<time>\d{2}:\d{2}:\d{2})\.csv$"
-)
+RUN_HOUR = 2      # 02:00 AM
+RUN_MINUTE = 0
+# ==========================================
 
 
-def clean_folder(folder_path):
-    if not os.path.exists(folder_path):
-        print(f"[!] Folder not found: {folder_path}")
-        return
+def clean_old_files():
+    now = datetime.now()
+    cutoff = now - timedelta(days=KEEP_DAYS)
 
-    print(f"\nCleaning folder: {folder_path}")
+    with open(LOG_FILE, "a") as log:
+        log.write(f"\n===== Cleaning started at {now} =====\n")
 
-    files_grouped = defaultdict(list)
+        for folder in FOLDERS_TO_CLEAN:
+            if not os.path.exists(folder):
+                log.write(f"[WARNING] Folder not found: {folder}\n")
+                continue
 
-    for filename in os.listdir(folder_path):
-        match = pattern.match(filename)
-        if match:
-            prefix = match.group("prefix")
-            date = match.group("date")
-            time_part = match.group("time")
+            for filename in os.listdir(folder):
+                if not filename.endswith(FILE_EXTENSIONS):
+                    continue
 
-            dt = datetime.strptime(
-                f"{date} {time_part}", "%Y-%m-%d %H:%M:%S"
-            )
+                file_path = os.path.join(folder, filename)
 
-            key = (prefix, date)
-            files_grouped[key].append((dt, filename))
+                if os.path.isfile(file_path):
+                    file_mtime = datetime.fromtimestamp(
+                        os.path.getmtime(file_path)
+                    )
 
-    deleted_count = 0
+                    if file_mtime < cutoff:
+                        try:
+                            file_size = os.path.getsize(file_path)
+                            os.remove(file_path)
+                            log.write(
+                                f"[DELETED] {file_path} "
+                                f"(Size: {round(file_size/1024,2)} KB)\n"
+                            )
+                        except Exception as e:
+                            log.write(
+                                f"[ERROR] Could not delete {file_path}: {e}\n"
+                            )
 
-    for key, file_list in files_grouped.items():
-        file_list.sort(reverse=True)  # newest first
-        latest = file_list[0]
+        log.write(f"===== Cleaning finished at {datetime.now()} =====\n")
 
-        for _, old_file in file_list[1:]:
-            file_path = os.path.join(folder_path, old_file)
-
-            if DELETE_FILES:
-                os.remove(file_path)
-                print(f"Deleted: {old_file}")
-            else:
-                print(f"Would delete: {old_file}")
-
-            deleted_count += 1
-
-    print(f"Finished {folder_path} → Deleted {deleted_count} files")
-
-
-def run_cleaner():
-    print(f"\n===== Running Cleaner at {datetime.now()} =====")
-    for folder in FOLDERS_TO_CLEAN:
-        clean_folder(folder)
-    print("===== Cleaner Finished =====\n")
-
-
-# ==============================
-# DAILY SCHEDULER
-# ==============================
 
 if __name__ == "__main__":
-    scheduler = BlockingScheduler()
+    scheduler = BackgroundScheduler()
 
-    # Run daily at 02:00 AM
     scheduler.add_job(
-        run_cleaner,
-        CronTrigger(hour=2, minute=0),
-        id="daily_csv_cleaner",
+        clean_old_files,
+        CronTrigger(hour=RUN_HOUR, minute=RUN_MINUTE),
+        id="daily_file_cleaner",
         replace_existing=True,
+        max_instances=1,
     )
 
-    print("Daily CSV cleaner started (runs at 02:00 AM)")
-    run_cleaner()  # Optional: run once immediately
     scheduler.start()
+
+    print("Cleaner scheduler started...")
+    print(f"Runs daily at {RUN_HOUR:02d}:{RUN_MINUTE:02d}")
+    print(f"Keeping files for {KEEP_DAYS} days")
+    print("Press Ctrl+C to exit")
+
+    try:
+        while True:
+            time.sleep(60)
+    except (KeyboardInterrupt, SystemExit):
+        scheduler.shutdown()
+        print("Scheduler stopped.")

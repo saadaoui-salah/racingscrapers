@@ -11,7 +11,7 @@ FOLDERS_TO_CLEAN = [
 ]
 
 FILE_EXTENSIONS = (".csv", ".log")
-KEEP_DAYS = 2
+KEEP_DAYS = 1
 LOG_FILE = os.path.join(BASE_DIR, "cleaner.log")
 
 RUN_HOUR = 2      # 02:00 AM

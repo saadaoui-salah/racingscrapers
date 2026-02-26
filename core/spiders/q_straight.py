@@ -106,7 +106,7 @@ class RacingqueenslandSpider(scrapy.Spider):
 
         for i in range(3):  # today + last 2 days
             day = today - timedelta(days=i)
-            result.append(day.strftime("%Y/%m/%d"))
+            result.append(day.strftime("%Y/%m"))
 
         return result
 

@@ -174,10 +174,7 @@ class UpcomingSpider(scrapy.Spider):
                     'whether':f"{resp['meeting']['trackCondition']} {resp['meeting']['weatherCondition']}",
                     'scraped_at': str(datetime.now())
                 }
-                item['dog_track_dist'] = ''
-                item['dog_av_1'] = ''
                 item['dog_trainer'] = ''
-                item['dog_last_start'] = ''
                 yield item
             return
         if 'https' not in url:
@@ -214,15 +211,9 @@ class UpcomingSpider(scrapy.Spider):
                 'whether':f"{resp['meeting']['trackCondition']} {resp['meeting']['weatherCondition']}",
                 'scraped_at': str(datetime.now())
             }
-            item['dog_track_dist'] = ''
-            item['dog_av_1'] = ''
             item['dog_trainer'] = ''
-            item['dog_last_start'] = ''
             if row:
-                item['dog_track_dist'] = row.css('.race-runners__track-dist::text').get()
-                item['dog_av_1'] = row.css('.race-runners__speedmap div:nth-child(1)::text').get()
                 item['dog_trainer'] = row.css('.race-runners__trainer a::text').get()
-                item['dog_last_start'] = '|'.join(row.xpath('.//a[@class="runner-result-cell"]//div//text()').getall())
             yield item
 
         

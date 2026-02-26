@@ -123,30 +123,69 @@ def schedule_spider(spider_name):
     if scheduler.get_job(job_id):
         scheduler.remove_job(job_id)
 
-    start_t = datetime.strptime(start_time, "%H:%M").time() if start_time else None
-    end_t = datetime.strptime(end_time, "%H:%M").time() if end_time else None
+    # Parse times safely
+    start_t = None
+    end_t = None
 
-    # Interval triggers
+    if start_time:
+        try:
+            start_t = datetime.strptime(start_time, "%H:%M").time()
+        except ValueError:
+            flash("Invalid start time format", "error")
+            return redirect(url_for("index"))
+
+    if end_time:
+        try:
+            end_t = datetime.strptime(end_time, "%H:%M").time()
+        except ValueError:
+            flash("Invalid end time format", "error")
+            return redirect(url_for("index"))
+
+    # --------------------
+    # INTERVAL TRIGGERS
+    # --------------------
     if schedule_type == "10min":
         trigger = IntervalTrigger(minutes=10)
+
     elif schedule_type == "15min":
         trigger = IntervalTrigger(minutes=15)
+
     elif schedule_type == "30min":
         trigger = IntervalTrigger(minutes=30)
-    # Cron triggers
-    elif schedule_type == "daily":
-        trigger = CronTrigger(hour=start_t.hour, minute=start_t.minute)
-    elif schedule_type == "weekly":
-        trigger = CronTrigger(day_of_week="mon", hour=start_t.hour, minute=start_t.minute)
-    elif schedule_type == "monthly":
-        trigger = CronTrigger(day=1, hour=start_t.hour, minute=start_t.minute)
+
+    # --------------------
+    # CRON TRIGGERS
+    # --------------------
+    elif schedule_type in ["daily", "weekly", "monthly"]:
+
+        if not start_t:
+            flash("Start time is required for daily/weekly/monthly schedule", "error")
+            return redirect(url_for("index"))
+
+        if schedule_type == "daily":
+            trigger = CronTrigger(hour=start_t.hour, minute=start_t.minute)
+
+        elif schedule_type == "weekly":
+            trigger = CronTrigger(
+                day_of_week="mon",
+                hour=start_t.hour,
+                minute=start_t.minute,
+            )
+
+        elif schedule_type == "monthly":
+            trigger = CronTrigger(
+                day=1,
+                hour=start_t.hour,
+                minute=start_t.minute,
+            )
+
     else:
         flash("Invalid schedule", "error")
         return redirect(url_for("index"))
 
     scheduler.add_job(
         run_spider_job,
-        trigger,
+        trigger=trigger,
         args=[spider_name, start_t, end_t],
         id=job_id,
         name=schedule_type,

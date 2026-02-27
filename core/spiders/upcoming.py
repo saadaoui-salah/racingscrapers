@@ -115,8 +115,7 @@ class UpcomingSpider(scrapy.Spider):
         'QPD':'ladbrokes-q2-parkland',
         'CPL':'capalaba',
         'QST':'ladbrokes-q-straight',
-        'QPD2':'ladbrokes-q1-lakeside',
-        'IPS':'ipswich',
+        'QLE':'ladbrokes-q1-lakeside',
     }
 
     def start_requests(self):

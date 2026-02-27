@@ -11,9 +11,8 @@ class ResultsSpider(scrapy.Spider):
     races_dict = {
         'CPL':'capalaba',
         'QST':'ladbrokes-q-straight',
-        'QPD2':'ladbrokes-q1-lakeside',
+        'QLE':'ladbrokes-q1-lakeside',
         'QPD':'ladbrokes-q2-parkland',
-        'IPS':'ipswich',
     }
 
 

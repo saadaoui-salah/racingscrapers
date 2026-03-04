@@ -117,6 +117,8 @@ class UpcomingSpider(scrapy.Spider):
         'QST':'ladbrokes-q-straight',
         'QLE':'ladbrokes-q1-lakeside',
     }
+    s3_prefix = "/csv/qld-racing/races/upcoming"
+    
 
     def start_requests(self):
         for date in get_date_list():

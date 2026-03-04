@@ -45,11 +45,10 @@ class DropboxUploadExtension:
 
 class S3UploadExtension:
 
-    def __init__(self, access_key, secret_key, bucket, s3_prefix, file_path):
+    def __init__(self, access_key, secret_key, bucket, file_path):
         self.access_key = access_key
         self.secret_key = secret_key
         self.bucket = bucket
-        self.s3_prefix = s3_prefix.rstrip("/") + "/"
         self.file_path = file_path  # detected output file
 
     @classmethod
@@ -57,11 +56,6 @@ class S3UploadExtension:
         access_key = crawler.settings.get("AWS_ACCESS_KEY_ID")
         secret_key = crawler.settings.get("AWS_SECRET_ACCESS_KEY")
         bucket = crawler.settings.get("S3_BUCKET")
-
-        s3_prefix = crawler.settings.get(
-            "S3_PREFIX",
-            f"unity-catalog/652267796750120/CSV/{datetime.now().strftime('%Y%m%d%H%M%S')}"
-        )
 
         # -------- Detect output file automatically -------- #
         file_path = None
@@ -78,13 +72,13 @@ class S3UploadExtension:
         if not file_path:
             raise Exception("❌ Could not detect output file (FEEDS / -o not set)")
 
-        ext = cls(access_key, secret_key, bucket, s3_prefix, file_path)
+        ext = cls(access_key, secret_key, bucket, file_path)
         crawler.signals.connect(ext.spider_closed, signal=signals.spider_closed)
         return ext
 
     def spider_closed(self, spider):
         spider.logger.info("🚀 Spider closed — uploading output file to S3...")
-
+        self.s3_prefix = "csv/qld-racing/races"
         try:
             if not os.path.exists(self.file_path):
                 spider.logger.error(f"❌ Output file not found: {self.file_path}")
@@ -99,8 +93,8 @@ class S3UploadExtension:
             filename = os.path.basename(self.file_path)
 
             s3_key = (
-                f"{self.s3_prefix}{spider.name}_"
-                f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+                f"{self.s3_prefix}/{spider.name.replace('_csv','')}/"
+                f"{filename}"
             )
 
             s3.upload_file(self.file_path, self.bucket, s3_key)

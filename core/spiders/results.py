@@ -14,6 +14,7 @@ class ResultsSpider(scrapy.Spider):
         'QLE':'ladbrokes-q1-lakeside',
         'QPD':'ladbrokes-q2-parkland',
     }
+    s3_prefix = "/csv/qld-racing/races/results"
 
 
     def start_requests(self):

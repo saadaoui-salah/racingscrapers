@@ -78,7 +78,7 @@ class S3UploadExtension:
 
     def spider_closed(self, spider):
         spider.logger.info("🚀 Spider closed — uploading output file to S3...")
-        self.s3_prefix = "csv/qld-racing/races"
+        self.s3_prefix = "unity-catalog/652267796750120/CSV/qld-racing/races"
         try:
             if not os.path.exists(self.file_path):
                 spider.logger.error(f"❌ Output file not found: {self.file_path}")

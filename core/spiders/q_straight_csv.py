@@ -62,7 +62,6 @@ class RacingqueenslandCSVSpider(scrapy.Spider):
 
     def parse(self, response):
         dates = self.get_slugs()
-        breakpoint()
         for race in response.css('.c-accordion__list__list li'):
             title = race.css('span::text').get().lower()
             if title.split()[0] in dates and self.race_name.lower() in title.lower():

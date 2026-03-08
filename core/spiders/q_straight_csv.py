@@ -45,7 +45,7 @@ class RacingqueenslandCSVSpider(scrapy.Spider):
         result = []
         today = datetime.now()
 
-        for i in range(3):  # today + last 2 days
+        for i in range(4):  # today + last 2 days
             day = today - timedelta(days=i)
             result.append(day.strftime("%d/%m/%Y"))
 

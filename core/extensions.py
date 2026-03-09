@@ -73,10 +73,10 @@ class S3UploadExtension:
             raise Exception("❌ Could not detect output file (FEEDS / -o not set)")
 
         ext = cls(access_key, secret_key, bucket, file_path)
-        crawler.signals.connect(ext.spider_closed, signal=signals.spider_closed)
+        crawler.signals.connect(ext.engine_stopped, signal=signals.engine_stopped)
         return ext
 
-    def spider_closed(self, spider):
+    def engine_stopped(self, spider):
         spider.logger.info("🚀 Spider closed — uploading output file to S3...")
         self.s3_prefix = "unity-catalog/652267796750120/CSV/qld-racing/races"
         try:
@@ -97,7 +97,7 @@ class S3UploadExtension:
                 f"{filename}"
             )
 
-            s3.upload_file(self.file_path, self.bucket, s3_key)
+            #s3.upload_file(self.file_path, self.bucket, s3_key)
 
             spider.logger.info(f"✅ Uploaded to S3: s3://{self.bucket}/{s3_key}")
 

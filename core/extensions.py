@@ -45,11 +45,12 @@ class DropboxUploadExtension:
 
 class S3UploadExtension:
 
-    def __init__(self, access_key, secret_key, bucket, file_path):
+    def __init__(self, access_key, secret_key, bucket, file_path, spider_name):
         self.access_key = access_key
         self.secret_key = secret_key
         self.bucket = bucket
-        self.file_path = file_path  # detected output file
+        self.file_path = file_path
+        self.spider_name = spider_name  # store spider name
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -57,31 +58,27 @@ class S3UploadExtension:
         secret_key = crawler.settings.get("AWS_SECRET_ACCESS_KEY")
         bucket = crawler.settings.get("S3_BUCKET")
 
-        # -------- Detect output file automatically -------- #
+        # Detect output file automatically
         file_path = None
-
-        # New Scrapy (FEEDS setting)
         feeds = crawler.settings.get("FEEDS")
         if feeds:
-            file_path = list(feeds.keys())[0]  # first output target
-
-        # Old Scrapy fallback
+            file_path = list(feeds.keys())[0]
         if not file_path:
             file_path = crawler.settings.get("FEED_URI")
-
         if not file_path:
             raise Exception("❌ Could not detect output file (FEEDS / -o not set)")
 
-        ext = cls(access_key, secret_key, bucket, file_path)
+        ext = cls(access_key, secret_key, bucket, file_path, crawler.spider.name)
         crawler.signals.connect(ext.engine_stopped, signal=signals.engine_stopped)
         return ext
 
-    def engine_stopped(self, spider):
-        spider.logger.info("🚀 Spider closed — uploading output file to S3...")
-        self.s3_prefix = "unity-catalog/652267796750120/CSV/qld-racing/races"
+    def engine_stopped(self):
+        print("🚀 Engine stopped — uploading output file to S3...")
+        s3_prefix = "unity-catalog/652267796750120/CSV/qld-racing/races"
+
         try:
             if not os.path.exists(self.file_path):
-                spider.logger.error(f"❌ Output file not found: {self.file_path}")
+                print(f"❌ Output file not found: {self.file_path}")
                 return
 
             s3 = boto3.client(
@@ -91,15 +88,14 @@ class S3UploadExtension:
             )
 
             filename = os.path.basename(self.file_path)
-
-            s3_key = (
-                f"{self.s3_prefix}/{spider.name.replace('_csv','')}/"
-                f"{filename}"
-            )
+            s3_key = f"{s3_prefix}/{self.spider_name.replace('_csv','')}/{filename}"
 
             s3.upload_file(self.file_path, self.bucket, s3_key)
-            spider.logger.info(f"✅ Uploaded to S3: s3://{self.bucket}/{s3_key}")
-            os.remove(filename)
+            print(f"✅ Uploaded to S3: s3://{self.bucket}/{s3_key}")
+
+            # Delete the local file after upload
+            os.remove(self.file_path)
+            print(f"🗑 Deleted local file: {self.file_path}")
 
         except Exception as e:
-            spider.logger.error(f"❌ S3 upload failed: {e}")
+            print(f"❌ S3 upload failed: {e}")

@@ -97,7 +97,7 @@ class S3UploadExtension:
                 f"{filename}"
             )
 
-            #s3.upload_file(self.file_path, self.bucket, s3_key)
+            s3.upload_file(self.file_path, self.bucket, s3_key)
 
             spider.logger.info(f"✅ Uploaded to S3: s3://{self.bucket}/{s3_key}")
 

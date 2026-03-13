@@ -40,12 +40,11 @@ class ResultsSpider(scrapy.Spider):
 
     def parse(self, response):
         resp = load(response)
-        if resp['parimutuelPlaceStatus'].lower() == 'closed':
-            yield ZyteRequest(
-                url=f"https://www.thedogs.com.au/racing/{response.meta['race']}/{self.date}?trial=false",
-                callback=self.parse_all,
-                meta={**response.meta , 'resp':resp}
-            ) 
+        yield ZyteRequest(
+            url=f"https://www.thedogs.com.au/racing/{response.meta['race']}/{self.date}?trial=false",
+            callback=self.parse_all,
+            meta={**response.meta , 'resp':resp}
+        ) 
 
     def parse_all(self, response):
         dogs_rsp = load(response)

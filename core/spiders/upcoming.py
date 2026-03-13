@@ -142,12 +142,11 @@ class UpcomingSpider(scrapy.Spider):
 
     def parse(self, response):
         resp = load(response)
-        if resp['parimutuelPlaceStatus'].lower() == 'open':
-            yield ZyteRequest(
-                url=f"https://www.thedogs.com.au/racing/{response.meta['race']}/{response.meta['date']}?trial=false",
-                callback=self.parse_all,
-                meta={**response.meta , 'resp':resp, 'u':f"https://www.thedogs.com.au/racing/{response.meta['race']}/{response.meta['date']}?trial=false"}
-            ) 
+        yield ZyteRequest(
+            url=f"https://www.thedogs.com.au/racing/{response.meta['race']}/{response.meta['date']}?trial=false",
+            callback=self.parse_all,
+            meta={**response.meta , 'resp':resp, 'u':f"https://www.thedogs.com.au/racing/{response.meta['race']}/{response.meta['date']}?trial=false"}
+        ) 
 
     def parse_all(self, response):
         dogs_rsp = load(response)

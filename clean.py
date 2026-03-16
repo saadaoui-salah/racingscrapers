@@ -12,7 +12,6 @@ FOLDERS_TO_CLEAN = [
 
 FILE_EXTENSIONS = (".csv", ".log")
 KEEP_DAYS = 1
-LOG_FILE = os.path.join(BASE_DIR, "cleaner.log")
 
 RUN_HOUR = 2      # 02:00 AM
 RUN_MINUTE = 0
@@ -23,36 +22,26 @@ def clean_old_files():
     now = datetime.now()
     cutoff = now - timedelta(days=KEEP_DAYS)
 
-    with open(LOG_FILE, "a") as log:
-        log.write(f"\n===== Cleaning started at {now} =====\n")
+   
+    for folder in FOLDERS_TO_CLEAN:
+        if not os.path.exists(folder):
+            continue
 
-        for folder in FOLDERS_TO_CLEAN:
-            if not os.path.exists(folder):
-                log.write(f"[WARNING] Folder not found: {folder}\n")
-                continue
+        for filename in os.listdir(folder):
+            file_path = os.path.join(folder, filename)
 
-            for filename in os.listdir(folder):
-                file_path = os.path.join(folder, filename)
+            if os.path.isfile(file_path):
+                file_mtime = datetime.fromtimestamp(
+                    os.path.getmtime(file_path)
+                )
 
-                if os.path.isfile(file_path):
-                    file_mtime = datetime.fromtimestamp(
-                        os.path.getmtime(file_path)
-                    )
-
-                    if file_mtime < cutoff:
-                        try:
-                            file_size = os.path.getsize(file_path)
-                            os.remove(file_path)
-                            log.write(
-                                f"[DELETED] {file_path} "
-                                f"(Size: {round(file_size/1024,2)} KB)\n"
-                            )
-                        except Exception as e:
-                            log.write(
-                                f"[ERROR] Could not delete {file_path}: {e}\n"
-                            )
-
-        log.write(f"===== Cleaning finished at {datetime.now()} =====\n")
+                if file_mtime < cutoff:
+                    try:
+                        os.remove(file_path)
+                    except Exception as e:
+                        print(
+                            f"[ERROR] Could not delete {file_path}: {e}\n"
+                        )
 
 
 if __name__ == "__main__":

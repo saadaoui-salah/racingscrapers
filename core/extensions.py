@@ -1,3 +1,5 @@
+from collections import defaultdict
+import csv
 import os
 
 import dropbox
@@ -73,10 +75,14 @@ class S3UploadExtension:
         return ext
 
     def engine_stopped(self):
-        print("🚀 Engine stopped — uploading output file to S3...")
+
+        print("🚀 Engine stopped — processing CSV and uploading to S3...")
+
+
         s3_prefix = "unity-catalog/652267796750120/CSV/qld-racing/races"
 
         try:
+
             if not os.path.exists(self.file_path):
                 print(f"❌ Output file not found: {self.file_path}")
                 return
@@ -87,15 +93,65 @@ class S3UploadExtension:
                 aws_secret_access_key=self.secret_key,
             )
 
-            filename = os.path.basename(self.file_path)
-            s3_key = f"{s3_prefix}/{self.spider_name.replace('_csv','')}/{filename}"
+            files_to_upload = []
 
-            s3.upload_file(self.file_path, self.bucket, s3_key)
-            print(f"✅ Uploaded to S3: s3://{self.bucket}/{s3_key}")
+            with open(self.file_path, newline="", encoding="utf-8") as f:
 
-            # Delete the local file after upload
-            os.remove(self.file_path)
-            print(f"🗑 Deleted local file: {self.file_path}")
+                reader = csv.DictReader(f)
+
+                # If no filename column → upload original file
+                if "filename" not in reader.fieldnames:
+                    files_to_upload.append(self.file_path)
+
+                else:
+
+                    grouped_rows = defaultdict(list)
+
+                    for row in reader:
+                        grouped_rows[row["filename"]].append(row)
+
+                    output_fields = [f for f in reader.fieldnames if f != "filename"]
+
+                    for filename, rows in grouped_rows.items():
+
+                        new_file = f"{filename}.csv"
+
+                        with open(new_file, "w", newline="", encoding="utf-8") as out:
+
+                            writer = csv.DictWriter(
+                                out,
+                                fieldnames=output_fields
+                            )
+
+                            writer.writeheader()
+
+                            for row in rows:
+                                row.pop("filename", None)
+                                writer.writerow(row)
+
+                        files_to_upload.append(new_file)
+
+            # Upload files to S3
+            for path in files_to_upload:
+
+                filename = os.path.basename(path)
+
+                s3_key = f"{s3_prefix}/{self.spider_name.replace('_csv','')}/{filename}"
+
+                s3.upload_file(path, self.bucket, s3_key)
+
+                print(f"✅ Uploaded to S3: s3://{self.bucket}/{s3_key}")
+
+            # Delete created files
+            for path in files_to_upload:
+                if os.path.exists(path):
+                    os.remove(path)
+                    print(f"🗑 Deleted: {path}")
+
+            # Delete original file
+            if os.path.exists(self.file_path):
+                os.remove(self.file_path)
+                print(f"🗑 Deleted original file: {self.file_path}")
 
         except Exception as e:
             print(f"❌ S3 upload failed: {e}")

@@ -76,4 +76,5 @@ class RacingqueenslandCSVSpider(scrapy.Spider):
         csv_file = io.StringIO(csv_text)
         reader = csv.DictReader(csv_file)
         for row in reader:
+            row['filename'] = response.url.split('/')[-1]
             yield row

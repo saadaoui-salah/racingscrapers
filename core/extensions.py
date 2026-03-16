@@ -114,9 +114,7 @@ class S3UploadExtension:
 
                     for filename, rows in grouped_rows.items():
 
-                        new_file = f"{filename}.csv"
-
-                        with open(new_file, "w", newline="", encoding="utf-8") as out:
+                        with open(filename, "w", newline="", encoding="utf-8") as out:
 
                             writer = csv.DictWriter(
                                 out,
@@ -129,7 +127,7 @@ class S3UploadExtension:
                                 row.pop("filename", None)
                                 writer.writerow(row)
 
-                        files_to_upload.append(new_file)
+                        files_to_upload.append(filename)
 
             # Upload files to S3
             for path in files_to_upload:

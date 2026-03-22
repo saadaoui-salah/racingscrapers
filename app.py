@@ -145,13 +145,13 @@ def schedule_spider(spider_name):
     # INTERVAL TRIGGERS
     # --------------------
     if schedule_type == "10min":
-        trigger = IntervalTrigger(minutes=10)
+        trigger = IntervalTrigger(minutes=10, timezone=TZ)
 
     elif schedule_type == "15min":
-        trigger = IntervalTrigger(minutes=15)
+        trigger = IntervalTrigger(minutes=15, timezone=TZ)
 
     elif schedule_type == "30min":
-        trigger = IntervalTrigger(minutes=30)
+        trigger = IntervalTrigger(minutes=30, timezone=TZ)
 
     # --------------------
     # CRON TRIGGERS
@@ -163,13 +163,18 @@ def schedule_spider(spider_name):
             return redirect(url_for("index"))
 
         if schedule_type == "daily":
-            trigger = CronTrigger(hour=start_t.hour, minute=start_t.minute)
+            trigger = CronTrigger(
+                hour=start_t.hour,
+                minute=start_t.minute,
+                timezone=TZ
+            )
 
         elif schedule_type == "weekly":
             trigger = CronTrigger(
                 day_of_week="mon",
                 hour=start_t.hour,
                 minute=start_t.minute,
+                timezone=TZ
             )
 
         elif schedule_type == "monthly":
@@ -177,6 +182,7 @@ def schedule_spider(spider_name):
                 day=1,
                 hour=start_t.hour,
                 minute=start_t.minute,
+                timezone=TZ
             )
 
     else:
@@ -193,7 +199,7 @@ def schedule_spider(spider_name):
         max_instances=1,
     )
 
-    flash(f"{spider_name} scheduled ({schedule_type})", "success")
+    flash(f"{spider_name} scheduled ({schedule_type}) [Australia/Sydney]", "success")
     return redirect(url_for("index"))
 
 @app.route("/unschedule/<spider_name>", methods=["POST"])

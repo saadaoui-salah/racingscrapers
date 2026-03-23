@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.secret_key = "secret"
 
 # ---------------- Timezone ---------------- #
-TZ = ZoneInfo("Australia/Perth")
+TZ = ZoneInfo("America/New_York")
 
 # ---------------- Paths ---------------- #
 SPIDERS_FOLDER = os.path.abspath("core/spiders")
